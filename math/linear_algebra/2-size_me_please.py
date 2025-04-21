@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+"""This module contains a function that returns the shape of a matrix."""
 
 def matrix_shape(matrix):
     shape = []

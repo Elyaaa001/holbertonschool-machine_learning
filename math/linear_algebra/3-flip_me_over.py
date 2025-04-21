@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""This module contains a function 
+"""This module contains a function
 that returns the transpose of a 2D matrix."""
 
 

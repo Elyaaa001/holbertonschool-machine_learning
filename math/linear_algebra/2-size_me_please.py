@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-def maatrix_shape(matrix):
+
+def matrix_shape(matrix):
     shape = []
     while isinstance(matrix, list):
         shape.append(len(matrix))
-        if len (matrix) == 0:
+        if len(matrix) == 0:
             break
-        matrix = matrix [0]
+        matrix = matrix[0]
     return shape

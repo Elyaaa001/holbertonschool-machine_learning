@@ -4,7 +4,7 @@
 
 def cat_matrices2D(mat1, mat2, axis=0):
     """Concatenates two 2D matrices along a specific axis.
-    
+
     Returns a new matrix, or None if shapes are incompatible.
     """
     if axis == 0:

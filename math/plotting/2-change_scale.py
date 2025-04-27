@@ -20,4 +20,3 @@ def change_scale():
     plt.xlim(0, 28650)
     plt.plot(x, y)
     plt.show()
-    

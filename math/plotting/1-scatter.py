@@ -14,6 +14,8 @@ def scatter():
     x, y = np.random.multivariate_normal(mean, cov, 2000).T
     y += 180
     plt.figure(figsize=(6.4, 4.8))
-    pl
+    plt.xlabel('Height (in)')
+    plt.title('Men\'s Height vs Weight')
+    plt.ylabel('Weight (lbs)')
     plt.scatter(x, y, color='magenta')
     plt.show()

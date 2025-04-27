@@ -13,7 +13,7 @@ def mat_mul(mat1, mat2):
         list: result of the 2 matrices multiplied
     '''
     if len(mat1[0]) != len(mat2):
-        return Non
+        return None
     result = [[0 for _ in range(len(mat2[0]))] for _ in range(len(mat1))]
 
     for i in range(len(mat1)):

@@ -17,3 +17,4 @@ if __name__ == '__main__':
     print(Y_pred)
     print(np.argmax(Y_pred, axis=1))
     print(Y_test)
+    

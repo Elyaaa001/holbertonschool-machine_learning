@@ -91,4 +91,3 @@ class Decision_Tree:
     def depth(self):
         """calculate the depth of the decision tree"""
         return self.root.max_depth_below()
-    

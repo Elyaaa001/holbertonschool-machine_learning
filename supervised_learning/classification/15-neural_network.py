@@ -2,6 +2,7 @@
 """defines a neural network with one hidden
 layer performing binary classification"""
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class NeuralNetwork:
@@ -122,3 +123,47 @@ class NeuralNetwork:
         self.__b2 = self.__b2 - alpha * db2
         self.__W1 = self.__W1 - alpha * dW1
         self.__b1 = self.__b1 - alpha * db1
+
+    def train(self, X, Y, iterations=5000, alpha=0.05, verbose=True,
+              graph=True, step=100):
+        """Trains the neural network
+        X = numpy.ndarray with shape (nx, m) that contains the input data
+        Y = numpy.ndarray with shape (1, m) that contains the correct labels
+        iterations = positive integer containing the number of iterations
+        alpha = positive integer containing the learning rate
+        It also updates the private attributes __W, __b, and __A
+        verbose = boolean that defines whether or not to print information
+        graph = boolean that defines whether or not to graph information
+        step = the number of iterations between printing information"""
+        if type(iterations) is not int:
+            raise TypeError("iterations must be an integer")
+        if iterations < 1:
+            raise ValueError("iterations must be a positive integer")
+        if type(alpha) is not float:
+            raise TypeError("alpha must be a float")
+        if alpha < 0:
+            raise ValueError("alpha must be positive")
+        if verbose is True or graph is True:
+            if type(step) is not int:
+                raise TypeError("step must be an integer")
+            if step < 1 or step > iterations:
+                raise ValueError("step must be positive and <= iterations")
+        x_points = []
+        y_points = []
+        for i in range(iterations):
+            self.forward_prop(X)
+            self.gradient_descent(X, Y, self.__A1, self.__A2, alpha)
+            if i % step == 0:
+                cost = self.cost(Y, self.__A2)
+                x_points.append(i)
+                y_points.append(cost)
+                if verbose is True:
+                    print("Cost after {} iterations: {}".format(i, cost))
+
+        if graph is True:
+            plt.plot(x_points, y_points, 'b-')
+            plt.xlabel('iteration')
+            plt.ylabel('cost')
+            plt.title('Training Cost')
+            plt.show()
+        return self.evaluate(X, Y)

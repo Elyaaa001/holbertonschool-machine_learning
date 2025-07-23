@@ -48,3 +48,4 @@ def definiteness(matrix):
         return "Indefinite"
     else:
         return None
+    

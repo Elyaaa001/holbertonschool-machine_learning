@@ -1,92 +1,47 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Mon Mar 25 08:33:12 2021
-
-@author: Robinson Montes
+Performs K-means on a dataset
 """
 import numpy as np
 
 
 def kmeans(X, k, iterations=1000):
     """
-    Function that performs K-means on a dataset
-
-    Arguments:
-     - X is a numpy.ndarray of shape (n, d) containing the dataset
-        * n is the number of data points
-        * d is the number of dimensions for each data point
-     - k is a positive integer containing the number of clusters
-     - iterations is a positive integer containing the maximum number of
-        iterations that should be performed
-
-    Returns:
-     C, clss, or None, None on failure
-         - C is a numpy.ndarray of shape (k, d) containing the centroid means
-            for each cluster
-         - clss is a numpy.ndarray of shape (n,) containing the index of the
-            cluster in C that each data point belongs to
+    Performs K-means on a dataset
+    X: numpy.ndarray of shape (n, d) containing the dataset that will
+    be used for K-means clustering
+        n is the number of data points
+        d is the number of dimensions for each data point
+    iterations: positive integer containing the maximum number of
+    iterations that should be performed
+    return: C, clss, or None, None on failure
+        C is a numpy.ndarray of shape (k, d) containing the centroid means
+        for each cluster
+        clss is a numpy.ndarray of shape (n,) containing the index of the
+        cluster in C that each data point belongs to
     """
-
-    if not isinstance(X, np.ndarray) or len(X.shape) != 2:
+    if type(k) is not int or k <= 0:
         return None, None
-
-    if type(k) != int or k <= 0:
+    if type(X) is not np.ndarray or len(X.shape) != 2:
         return None, None
-
-    if type(iterations) != int or iterations <= 0:
+    if type(iterations) is not int or iterations <= 0:
         return None, None
-
     n, d = X.shape
-
-    minimum = np.amin(X, axis=0)
-    maximum = np.amax(X, axis=0)
-
-    # C = np.random.uniform(minimum, maximum, (k, d))
-    C = initialize(X, k)
-    clss = None
+    centroids = np.random.uniform(np.min(X, axis=0), np.max(X, axis=0),
+                                  size=(k, d))
     for i in range(iterations):
-        C_cpy = np.copy(C)
-        distance = np.linalg.norm(X[:, None] - C, axis=-1)
-        clss = np.argmin(distance, axis=-1)
-        # move the centroids
+        copy = centroids.copy()
+        D = np.sqrt(((X - centroids[:, np.newaxis]) ** 2).sum(axis=2))
+        clss = np.argmin(D, axis=0)
         for j in range(k):
-            index = np.argwhere(clss == j)
-            if not len(index):
-                C[j] = initialize(X, 1)
+            if len(X[clss == j]) == 0:
+                centroids[j] = np.random.uniform(np.min(X, axis=0),
+                                                 np.max(X, axis=0),
+                                                 size=(1, d))
             else:
-                C[j] = np.mean(X[index], axis=0)
-
-        if (C_cpy == C).all():
-            return C, clss
-
-    distance = np.linalg.norm(X[:, None] - C, axis=-1)
-    clss = np.argmin(distance, axis=-1)
-
-    return C, clss
-
-
-def initialize(X, k):
-    """
-    Function that initializes cluster centroids for K-means
-
-    Arguments:
-     - X is a numpy.ndarray of shape (n, d) containing the dataset
-         that will be used for K-means clustering
-        * n is the number of data points
-        * d is the number of dimensions for each data point
-     - k is a positive integer containing the number of clusters
-
-    Returns:
-     A numpy.ndarray of shape (k, d) containing the initialized centroids
-     for each cluster, or None on failure
-    """
-
-    n, d = X.shape
-
-    minimum = np.amin(X, axis=0)
-    maximum = np.amax(X, axis=0)
-
-    values = np.random.uniform(minimum, maximum, (k, d))
-
-    return values
+                centroids[j] = (X[clss == j]).mean(axis=0)
+        D = np.sqrt(((X - centroids[:, np.newaxis]) ** 2).sum(axis=2))
+        clss = np.argmin(D, axis=0)
+        if np.all(copy == centroids):
+            return centroids, clss
+    return centroids, clss

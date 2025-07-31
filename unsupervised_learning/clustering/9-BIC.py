@@ -1,89 +1,42 @@
 #!/usr/bin/env python3
-"""
-PCA: principal components analysis
-"""
-
+"""module BIC"""
 import numpy as np
-
 expectation_maximization = __import__('8-EM').expectation_maximization
 
 
 def BIC(X, kmin=1, kmax=None, iterations=1000, tol=1e-5, verbose=False):
-    """
-    Function that performs the expectation maximization for a GMM:
+    """Finds the best number of clusters for GMM
+    using the Bayesian Information criterion"""
+    n, d = X.shape
+    if kmax is None:
+        kmax = n
 
-    Args:
-    - X             numpy.ndarray       Array of shape (n, d) with the data
-    - kmin          int                 positive int with the minimum number
-                                        of clusters to check for (inclusive)
-    - kmax          int                 positive int with the maximum number
-                                        of clusters to check for (inclusive)
+    l = np.zeros(kmax - kmin + 1)
+    b = np.zeros(kmax - kmin + 1)
 
-    - iterations    int                 positive int with the maximum number
-                                        of iterations for the algorithm
-    - tol           float               non-negative float with the tolerance
-                                        of the log likelihood, used to
-                                        determine early stopping i.e. if the
-                                        difference is less than or equal to
-                                        tol you should stop the algorithm
-    - verbose       bool                boolean that determines if you should
-                                        print information about the algorithm
+    best_bic = float('inf')
+    best_k = None
+    best_result = None
 
-                    If True, print Log Likelihood after {i} iterations: {l}
-                    every 10 iterations and after the last iteration
-                        {i} is the number of iterations of the EM algorithm
-                        {l} is the log likelihood
-                    You should use:
-                    initialize = __import__('4-initialize').initialize
-                    expectation = __import__('6-expectation').expectation
-                    maximization = __import__('7-maximization').maximization
+    for k in range(kmin, kmax + 1):
+        pi, m, S, g, log_likelihood = expectation_maximization(
+            X, k, iterations, tol, verbose)
+        if pi is None or m is None or S is None or log_likelihood is None:
+            continue
+        p = (k - 1) + k * d + k * d * (d + 1) // 2
 
-Returns: pi, m, S, g, l, or None, None, None, None, None on failure
-    - pi            numpy.ndarray       Array of shape (k,) containing the
-                                        priors for each cluster
-    - m             numpy.ndarray       Array of shape (k, d) containing the
-                                        centroid means for each cluster
-    - S             numpy.ndarray       Array of shape (k, d, d) containing
-                                        the cov matrices for each cluster
-    - g             numpy.ndarray       Array of shape (k, n) containing the
-                                        probabilities for each data point in
-                                        each cluster
-    - l                                 is the log likelihood of the model
-    """
+        bic = p * np.log(n) - 2 * log_likelihood
 
-    try:
-        if (not isinstance(X, np.ndarray)):
+        bic = p * np.log(n) - 2 * log_likelihood
+
+        l[k - kmin] = log_likelihood
+        b[k - kmin] = bic
+
+        if bic < best_bic:
+            best_bic = bic
+            best_k = k
+            best_result = (pi, m, S)
+
+        if best_k is None:
             return None, None, None, None
-
-        if (not isinstance(kmin, int)):
-            return None, None, None, None
-
-        if (not isinstance(kmax, int)):
-            return None, None, None, None
-
-        if (not isinstance(iterations, int)):
-            return None, None, None, None
-
-        if (not isinstance(tol, float)):
-            return None, None, None, None
-
-        if (not isinstance(verbose, bool)):
-            return None, None, None, None
-
-        if (X.ndim != 2):
-            return None, None, None, None
-
-        n, d = X.shape
-        if (n < 1) or (
-                d < 1) or (kmin < 1) or (kmax < 1) or (
-                kmin > n)(kmax > n) or (iterations < 1):
-            return None, None, None, None
-
-        pi = np.zeros((kmin,))
-        m = np.zeros((kmin, d))
-        S = np.zeros((kmin, d, d))
-
-        return pi, m, S, 1, 1
-
-    except BaseException:
-        return None, None, None, None
+        return best_k, best_result, l, b

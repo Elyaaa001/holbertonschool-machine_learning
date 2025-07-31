@@ -1,44 +1,50 @@
 #!/usr/bin/env python3
-"""
-5-pdf.py
-"""
+"""PDF function """
+
 import numpy as np
 
 
 def pdf(X, m, S):
     """
-    function that calculates the probability density function
-    of a Gaussian distribution
+    Probability Density Function of gaussian distributions
     """
 
-    if not isinstance(X, np.ndarray) or X.ndim != 2:
+    if not isinstance(X, np.ndarray) or len(X.shape) != 2:
         return None
-    if not isinstance(m, np.ndarray) or m.ndim != 1:
+    if not isinstance(m, np.ndarray) or len(m.shape) != 1:
         return None
-    if not isinstance(S, np.ndarray) or S.ndim != 2:
+    if not isinstance(S, np.ndarray) or len(S.shape) != 2:
         return None
     if X.shape[1] != m.shape[0] or X.shape[1] != S.shape[0]:
         return None
     if S.shape[0] != S.shape[1]:
         return None
 
-    # n: number of dada points
-    # d: dimension of each data point
+    # formula
+    # p(x μ,Σ) = (1 (2π)d|Σ|)exp(1/2(xμ)T Σ1(xμ))
     n, d = X.shape
+    mean = m
+    x_m = X - mean
 
-    # Compute the pdf
-    A = 1.0 / np.sqrt(((2 * np.pi) ** d) * np.linalg.det(S))
-    # The following operation is computationally more expensives than need be:
-    # B = np.exp(-0.5 * np.diag(np.linalg.multi_dot([(X - m),
-    #                                                np.linalg.inv(S),
-    #                                                (X - m).T])))
-    # Instead minimize computation cost by applying the following operation:
-    # (provided for the optimization of this task)
-    M = np.matmul(np.linalg.inv(S), (X - m).T)
-    B = np.exp(-0.5 * np.sum((X - m).T * M, axis=0))
-    PDF = A * B
+    # Determinant of the covariance matrix (d x d)
+    det_S = np.linalg.det(S)
 
-    # All values in P should have a minimum value of 1e-300
-    PDF = np.maximum(PDF, 1e-300)
+    # Since Σ is Hermitian, it has an eigendecomposition
+    inv_S = np.linalg.inv(S)
 
-    return PDF
+    # Formula Section one: (1 (2π)d|Σ|)
+    part_1_dem = np.sqrt(det_S) * ((2 * np.pi) ** (d/2))
+
+    # Formula Section two_upper_1: 1/2(xμ)T
+    part_2 = np.matmul(x_m, inv_S)
+
+    # Formula Section two_upper_2: Σ1(xμ) used diagonal to fix alloc err
+    part_2_1 = np.sum(x_m * part_2, axis=1)
+
+    # Formula Section two exp(1/2(xμ)T Σ1(xμ))
+    part_2_2 = np.exp(part_2_1 / -2)
+
+    # pdf = part_1 * part_2_2:
+    pdf = part_2_2 / part_1_dem
+    P = np.where(pdf < 1e-300, 1e-300, pdf)
+    return P

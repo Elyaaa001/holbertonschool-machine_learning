@@ -1,49 +1,48 @@
 #!/usr/bin/env python3
 """
-7-maximization.py
+Calculates the maximization step in the EM algorithm for a GMM
 """
 import numpy as np
 
 
 def maximization(X, g):
     """
-    function that calculates the maximization step
-    in the EM algorithm for a GMM
+    Calculates the maximization step in the EM algorithm for a GMM
+    :param X: numpy.ndarray of shape (n, d) containing the data set
+    :param g: numpy.ndarray of shape (k, n) containing the posterior
+    probabilities for each data point in each cluster
+    :return: pi, m, S, or None, None, None on failure
+        pi is a numpy.ndarray of shape (k,) containing the updated priors for
+        each cluster
+        m is a numpy.ndarray of shape (k, d) containing the updated centroid
+        means for each cluster
+        S is a numpy.ndarray of shape (k, d, d) containing the updated
+        covariance matrices for each cluster
     """
-
-    if not isinstance(X, np.ndarray) or X.ndim != 2:
+    if type(X) is not np.ndarray or len(X.shape) != 2:
         return None, None, None
-    if not isinstance(g, np.ndarray) or g.ndim != 2:
+    if type(g) is not np.ndarray or len(g.shape) != 2:
+        return None, None, None
+    if X.shape[0] != g.shape[1]:
+        return None, None, None
+    cluster = np.sum(g, axis=0)
+    cluster = np.sum(cluster)
+    if int(cluster) != X.shape[0]:
         return None, None, None
 
-    # X: array of shape (n, d) containing the data set
     n, d = X.shape
+    k, n = g.shape
 
-    # g: array of shape (k, n) containing the posteriors
-    if g.shape[1] != n:
-        return None, None, None
-    k = g.shape[0]
-    if g.shape[0] != k:
-        return None, None, None
-
-    # Ensure the sum of all posteriors (over the k clusters) is equal to 1
-    if not np.isclose(np.sum(g, axis=0), np.ones(n,)).all():
-        return None, None, None
-
-    # Initialize pi, m and S with zeros
-    pi = np.zeros((k,))
-    m = np.zeros((k, d))
-    S = np.zeros((k, d, d))
-
-    # Iterate over each cluster centroid:
+    # nk is the sum of posterior probabilities
+    nk = np.sum(g, axis=1)
+    # The task here is update priors(pi), mean and covariance(cov)
+    # pi (also call weights) is nk / the total number of points
+    pi = nk / n
+    mean = np.zeros((k, d))
+    cov = np.zeros((k, d, d))
     for i in range(k):
-        # Sum gi over the n data points
-        gn = np.sum(g[i], axis=0)
-        pi[i] = gn / n
-        m[i] = np.sum(np.matmul(g[i][np.newaxis, ...], X), axis=0) / gn
-        S[i] = np.matmul(g[i][np.newaxis, ...] * (X - m[i]).T, (X - m[i])) / gn
-        # print("pi[{}]:".format(i), pi[i])
-        # print("m[{}]:".format(i), m[i])
-        # print("S[{}]:".format(i), S[i])
+        mean[i] = np.matmul(g[i], X) / nk[i]
+        norm = X - mean[i]
+        cov[i] = np.matmul(g[i] * norm.T, norm) / nk[i]
 
-    return pi, m, S
+    return pi, mean, cov

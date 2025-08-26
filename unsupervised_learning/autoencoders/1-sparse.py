@@ -1,67 +1,57 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 """
-Created on Mon Apr 19 23:09:29 2021
+Module contains function that creates a sparse autoencoder.
+"""
 
-@author: Robinson Montes
-"""
+
 import tensorflow.keras as keras
 
 
-def sparse(input_dims, hidden_layers, latent_dims, lambtha):
+def autoencoder(input_dims, hidden_layers, latent_dims, lambtha):
     """
-    Function that creates a sparse autoencoder
+    Creates an autoencoder network.
 
-    Arguments:
-     - input_dims is an integer containing the dimensions of the model input
-     - hidden_layers is a list containing the number of nodes for each
-        hidden layer in the encoder, respectively
-        * the hidden layers should be reversed for the decoder
-     - latent_dims is an integer containing the dimensions of
-        the latent space representation
-     - lambtha is the regularization parameter used for L1 regularization
-        on the encoded output
+    Args:
+        input_dims: Integer - Dimensions of the model input.
+        hidden_layers: List - Number of nodes for each hidden layer in
+        the encoder.
+        latent_dims: Integer - Dimensions of the latent space representation.
+        lambtha: L1 regularization parameter used encoded output.
 
-    Returns:
-     encoder, decoder, auto
-        - encoder is the encoder model
-        - decoder is the decoder model
-        - auto is the sparse autoencoder model
+    Return: encoder, decoder, autoencoder
+        encoder: Encoder model.
+        decoder: Decoder model.
+        autoencoder: Full autoencoder model.
     """
-    # Encoder
-    input_encoder = keras.Input(shape=(input_dims, ))
 
-    hidden_encoder = keras.layers.Dense(hidden_layers[0],
-                                        activation='relu', )(input_encoder)
-
-    for i in range(1, len(hidden_layers)):
-        hidden_encoder = keras.layers.Dense(hidden_layers[i],
-                                            activation='relu')(hidden_encoder)
+    Dense = keras.layers.Dense
     reg = keras.regularizers.l1(lambtha)
-    oencoder = keras.layers.Dense(latent_dims,
-                                  activation='relu',
-                                  activity_regularizer=reg)(hidden_encoder)
 
-    # Decoder
-    input_decoder = keras.Input(shape=(latent_dims, ))
-    hidden_decoder = keras.layers.Dense(hidden_layers[-1],
-                                        activation='relu')(input_decoder)
+    input_layer = keras.Input(shape=(input_dims,))
+    encoded_input = keras.Input(shape=(latent_dims,))
 
-    for i in range(len(hidden_layers)-2, -1, -1):
-        hidden_decoder = keras.layers.Dense(hidden_layers[i],
-                                            activation='relu')(hidden_decoder)
-    output_decoder = keras.layers.Dense(input_dims,
-                                        activation='sigmoid',)(hidden_decoder)
+    encoded_layers = Dense(hidden_layers[0], activation="relu")(input_layer)
 
-    encoder = keras.models.Model(inputs=input_encoder, outputs=oencoder)
-    decoder = keras.models.Model(inputs=input_decoder, outputs=output_decoder)
+    for nodes in hidden_layers[1:]:
+        encoded_layers = Dense(nodes, activation="relu")(encoded_layers)
 
-    out_encoder = encoder(input_encoder)
-    out_decoder = decoder(out_encoder)
+    encoded_layers = Dense(
+        latent_dims, activation="relu", activity_regularizer=reg
+        )(encoded_layers)
 
-    # Autoencoder
-    autoencoder = keras.models.Model(inputs=input_encoder,
-                                     outputs=out_decoder)
-    autoencoder.compile(optimizer='Adam', loss='binary_crossentropy')
+    decoded = Dense(hidden_layers[-1], activation="relu")(encoded_input)
+
+    for x, nodes in enumerate(list(reversed(hidden_layers[:-1]))+[input_dims]):
+        if x == len(hidden_layers) - 1:
+            decoded = Dense(nodes, activation="sigmoid")(decoded)
+        else:
+            decoded = Dense(nodes, activation="relu")(decoded)
+
+    encoder = keras.Model(input_layer, encoded_layers)
+
+    decoder = keras.Model(encoded_input, decoded)
+
+    autoencoder = keras.Model(input_layer, decoder(encoder(input_layer)))
+    autoencoder.compile(optimizer="adam", loss="binary_crossentropy")
 
     return encoder, decoder, autoencoder

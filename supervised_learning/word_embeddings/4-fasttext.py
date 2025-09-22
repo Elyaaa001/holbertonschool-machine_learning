@@ -2,7 +2,7 @@
 """
 A function that creates and trains a gensim FastText model
 """
-from gensim.models import FastText
+import gensim
 
 
 def fasttext_model(sentences, vector_size=100, min_count=5, negative=5, window=5,
@@ -25,7 +25,7 @@ def fasttext_model(sentences, vector_size=100, min_count=5, negative=5, window=5
         gensim.models.FastText: The trained FastText model.
     """
     sg = 0 if cbow else 1
-    model = FastText(
+    model = gensim.models.FastText(
         vector_size=vector_size,
         window=window,
         min_count=min_count,

@@ -1,32 +1,22 @@
 #!/usr/bin/env python3
 """
-Transformer model that combines an encoder and a decoder.
-Provides a full Transformer layer with encoder, decoder, and final linear projection.
+Creates a Transformer network using Encoder and Decoder.
 """
 import tensorflow as tf
-import numpy as np
-import random
-
-# Set seeds for reproducibility
-seed = 42
-tf.random.set_seed(seed)
-np.random.seed(seed)
-random.seed(seed)
-
 Encoder = __import__('9-transformer_encoder').Encoder
 Decoder = __import__('10-transformer_decoder').Decoder
 
 
-class Transformer(tf.keras.layers.Layer):
+class Transformer(tf.keras.Model):
     """
-    Transformer model combining encoder, decoder, and final linear projection.
+    Transformer network combining encoder and decoder with final linear layer.
     """
 
     def __init__(self, N, dm, h, hidden, input_vocab, target_vocab,
                  max_seq_input, max_seq_target, drop_rate=0.1):
         """
-        Class constructor
-        :param N: number of encoder/decoder blocks
+        Transformer constructor
+        :param N: number of blocks in encoder and decoder
         :param dm: dimensionality of the model
         :param h: number of attention heads
         :param hidden: number of hidden units in feed-forward layers
@@ -43,16 +33,16 @@ class Transformer(tf.keras.layers.Layer):
                                max_seq_target, drop_rate)
         self.linear = tf.keras.layers.Dense(target_vocab)
 
-    def call(self, inputs, target, training, encoder_mask,
-             look_ahead_mask, decoder_mask):
+    def call(self, inputs, target, training,
+             encoder_mask, look_ahead_mask, decoder_mask):
         """
         Forward pass for the Transformer.
-        :param inputs: tensor (batch, input_seq_len) for encoder
-        :param target: tensor (batch, target_seq_len) for decoder
+        :param inputs: tensor (batch, input_seq_len)
+        :param target: tensor (batch, target_seq_len)
         :param training: boolean, training mode
-        :param encoder_mask: encoder mask
-        :param look_ahead_mask: first decoder attention mask
-        :param decoder_mask: second decoder attention mask
+        :param encoder_mask: padding mask for encoder
+        :param look_ahead_mask: look-ahead mask for decoder
+        :param decoder_mask: padding mask for decoder
         :return: tensor (batch, target_seq_len, target_vocab)
         """
         enc_output = self.encoder(inputs, training, encoder_mask)

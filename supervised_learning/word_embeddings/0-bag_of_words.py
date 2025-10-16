@@ -1,46 +1,43 @@
- #!/usr/bin/env python3
-"""
-0-bag_of words.py
-"""
+#!/usr/bin/env python3
 import numpy as np
 import re
 
-
 def bag_of_words(sentences, vocab=None):
     """
-    Create a Bag of Words embedding matrix.
-
-    Parameters:
-    sentences (list of str): List of sentences to analyze.
-    vocab (list of str, optional): List of vocabulary words to use.
-                                   If None, all words in sentences are used.
-
+    Creates a bag of words embedding matrix
+    Args:
+        sentences (list of str): list of sentences to analyze
+        vocab (list of str, optional): list of words to use as vocabulary
     Returns:
-    embeddings (numpy.ndarray): Array of shape (s, f) containing the embeddings
-                                s = number of sentences, f = number of features
-    features (list of str): List of vocabulary words used as features.
+        embeddings (np.ndarray): bag-of-words matrix of shape (s, f)
+        features (list of str): list of words used as features
     """
-    # Tokenizar y limpiar cada oración usando una comprensión de listas
-    tokenized_sentences = [
-        # palabras de 2 o más letras
-        re.findall(r'\b[a-zA-Z]{2,}\b', s.lower())
-        for s in sentences
-    ]
+    # Preprocess sentences: lowercase and remove punctuation
+    processed_sentences = []
+    for sentence in sentences:
+        # Lowercase and replace non-word characters with space
+        s = re.sub(r"[^a-zA-Z0-9']", " ", sentence.lower())
+        words = s.split()
+        processed_sentences.append(words)
 
-    # Construir vocabulario si no se proporciona
+    # Determine vocabulary if not provided
     if vocab is None:
-        vocab = sorted(
-            {word for words in tokenized_sentences for word in words})
+        vocab = set()
+        for words in processed_sentences:
+            vocab.update(words)
+        vocab = sorted(vocab)
 
-    word_to_index = {word: idx for idx, word in enumerate(vocab)}
+    # Map features to indices
+    features = np.array(vocab)
+    word2idx = {word: i for i, word in enumerate(vocab)}
 
-    # Inicializar matriz de embeddings
+    # Initialize embeddings matrix
     embeddings = np.zeros((len(sentences), len(vocab)), dtype=int)
 
-    # Rellenar la matriz de embeddings
-    for i, words in enumerate(tokenized_sentences):
+    # Fill embeddings
+    for i, words in enumerate(processed_sentences):
         for word in words:
-            if word in word_to_index:
-                embeddings[i, word_to_index[word]] += 1
+            if word in word2idx:
+                embeddings[i, word2idx[word]] += 1
 
-    return embeddings, np.array(vocab)
+    return embeddings, features

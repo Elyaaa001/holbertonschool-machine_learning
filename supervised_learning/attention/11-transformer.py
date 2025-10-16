@@ -1,25 +1,40 @@
 #!/usr/bin/env python3
 """
-Creates encoder for transformer
+Transformer model that combines an encoder and a decoder.
+Provides a full Transformer layer with encoder, decoder, and final linear projection.
 """
 import tensorflow as tf
+import numpy as np
+import random
+
+# Set seeds for reproducibility
+seed = 42
+tf.random.set_seed(seed)
+np.random.seed(seed)
+random.seed(seed)
+
 Encoder = __import__('9-transformer_encoder').Encoder
 Decoder = __import__('10-transformer_decoder').Decoder
 
 
 class Transformer(tf.keras.layers.Layer):
     """
-    Class to create an encoder for a transformer
+    Transformer model combining encoder, decoder, and final linear projection.
     """
 
     def __init__(self, N, dm, h, hidden, input_vocab, target_vocab,
                  max_seq_input, max_seq_target, drop_rate=0.1):
         """
         Class constructor
-        :param dm: an integer representing the dimensionality of the model
-        :param h: an integer representing the number of heads
-        :param hidden: the number of hidden units in the fully connected layer
-        :param drop_rate: the dropout rate
+        :param N: number of encoder/decoder blocks
+        :param dm: dimensionality of the model
+        :param h: number of attention heads
+        :param hidden: number of hidden units in feed-forward layers
+        :param input_vocab: size of input vocabulary
+        :param target_vocab: size of target vocabulary
+        :param max_seq_input: maximum input sequence length
+        :param max_seq_target: maximum target sequence length
+        :param drop_rate: dropout rate
         """
         super(Transformer, self).__init__()
         self.encoder = Encoder(N, dm, h, hidden, input_vocab,
@@ -28,25 +43,20 @@ class Transformer(tf.keras.layers.Layer):
                                max_seq_target, drop_rate)
         self.linear = tf.keras.layers.Dense(target_vocab)
 
-    def call(self, inputs, target, training, encoder_mask, look_ahead_mask,
-             decoder_mask):
+    def call(self, inputs, target, training, encoder_mask,
+             look_ahead_mask, decoder_mask):
         """
-        Function to create the decoder block for the transformer
-        :param x: a tensor of shape (batch, target_seq_len, dm)containing the
-        input to the decoder block
-        :param encoder_output: a tensor of shape (batch, input_seq_len, dm)
-        containing the output of the encoder
-        :param training: a boolean to determine if the model is training
-        :param look_ahead_mask: the mask to be applied to the first multi
-        head attention layer
-        :param padding_mask: the mask to be applied to the second multi head
-        attention layer
-        :return: a tensor of shape (batch, target_seq_len, dm) containing
-        the block’s output
+        Forward pass for the Transformer.
+        :param inputs: tensor (batch, input_seq_len) for encoder
+        :param target: tensor (batch, target_seq_len) for decoder
+        :param training: boolean, training mode
+        :param encoder_mask: encoder mask
+        :param look_ahead_mask: first decoder attention mask
+        :param decoder_mask: second decoder attention mask
+        :return: tensor (batch, target_seq_len, target_vocab)
         """
         enc_output = self.encoder(inputs, training, encoder_mask)
         dec_output = self.decoder(target, enc_output, training,
                                   look_ahead_mask, decoder_mask)
         output = self.linear(dec_output)
-
         return output

@@ -12,29 +12,27 @@ def bag_of_words(sentences, vocab=None):
         embeddings (np.ndarray): bag-of-words matrix of shape (s, f)
         features (list of str): list of words used as features
     """
-    # Preprocess sentences: lowercase and remove all punctuation
     processed_sentences = []
     for sentence in sentences:
-        # Lowercase and replace any non-alphanumeric characters with space
-        s = re.sub(r"[^a-zA-Z0-9]", " ", sentence.lower())
+        # Lowercase
+        s = sentence.lower()
+        # Replace possessive "'s" with nothing
+        s = re.sub(r"'s\b", "", s)
+        # Remove other punctuation
+        s = re.sub(r"[^a-zA-Z0-9\s]", " ", s)
         words = s.split()
         processed_sentences.append(words)
 
-    # Determine vocabulary if not provided
     if vocab is None:
         vocab_set = set()
         for words in processed_sentences:
             vocab_set.update(words)
         vocab = sorted(vocab_set)
 
-    # Map features to indices
     features = np.array(vocab)
     word2idx = {word: i for i, word in enumerate(vocab)}
 
-    # Initialize embeddings matrix
     embeddings = np.zeros((len(sentences), len(vocab)), dtype=int)
-
-    # Fill embeddings
     for i, words in enumerate(processed_sentences):
         for word in words:
             if word in word2idx:

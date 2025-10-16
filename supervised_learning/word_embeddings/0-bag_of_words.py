@@ -1,4 +1,10 @@
 #!/usr/bin/env python3
+"""
+0-bag_of_words module
+This module contains the function `bag_of_words` which creates a bag-of-words
+embedding matrix from a list of sentences.
+"""
+
 import numpy as np
 import re
 

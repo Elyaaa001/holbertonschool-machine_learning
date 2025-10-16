@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 import numpy as np
 import re
-def bag_of_words(sentences, vocab=None):
-
-    
+def bag_of_words(sentences, vocab=None):    
     """
     Creates a bag of words embedding matrix
     Args:

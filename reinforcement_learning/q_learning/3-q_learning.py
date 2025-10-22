@@ -1,27 +1,68 @@
 #!/usr/bin/env python3
-"""reinforcement learning"""
+""" Task 3: 3. Q-learning """
 import numpy as np
 epsilon_greedy = __import__('2-epsilon_greedy').epsilon_greedy
 
 
-def train(env, Q, episodes=5000, max_steps=100, alpha=0.1, gamma=0.99,
-          epsilon=1, min_epsilon=0.1, epsilon_decay=0.05):
-    """performs Q-learning"""
-    all_rewards = []
-    for episode in range(episodes):
+def train(
+        env,
+        Q,
+        episodes=5000,
+        max_steps=100,
+        alpha=0.1,
+        gamma=0.99,
+        epsilon=1,
+        min_epsilon=0.1,
+        epsilon_decay=0.05):
+    """[summary]
+    Args:
+        env ([type]): [description]
+        Q ([type]): [description]
+        episodes (int, optional): [description]. Defaults to 5000.
+        max_steps (int, optional): [description]. Defaults to 100.
+        alpha (float, optional): [description]. Defaults to 0.1.
+        gamma (float, optional): [description]. Defaults to 0.99.
+        epsilon (int, optional): [description]. Defaults to 1.
+        min_epsilon (float, optional): [description]. Defaults to 0.1.
+        epsilon_decay (float, optional): [description]. Defaults to 0.05.
+    Returns:
+        [type]: [description]
+    """
+
+    α = alpha
+    ε = epsilon
+    γ = gamma
+    min_ε = min_epsilon
+    ε_decay = epsilon_decay
+
+    total_rewards = []
+
+    for a_single_episode in range(episodes):
         state = env.reset()
         done = False
-        current_reward = 0
-        for _ in range(max_steps):
-            action = epsilon_greedy(Q, state, epsilon)
-            new_state, reward, done, _ = env.step(action)
-            Q[state, action] = Q[state, action] * (1 - alpha) + \
-                alpha * (reward + gamma * np.max(Q[new_state, :]))
+        # reward current episode
+
+        rewards = 0
+        for step in range(max_steps):
+
+            call_to_action = epsilon_greedy(Q, state, ε)
+            new_state, a_single_reward, done, info = env.step(call_to_action)
+
+            old_value = Q[state, call_to_action]
+            new_value = (a_single_reward + γ * np.max(Q[new_state, :]))
+            Q[state, call_to_action] = (old_value * (1 - α)) + (new_value * α)
+
             state = new_state
-            current_reward += reward
-            if done:
+
+            if done is True:
+                if a_single_reward != 1:
+                    rewards = -1
+                rewards = rewards + a_single_reward
                 break
-        epsilon = min_epsilon + (epsilon - min_epsilon) \
-            * np.exp(-epsilon_decay * episode)
-        all_rewards.append(current_reward)
-    return Q, all_rewards
+            else:
+                rewards = rewards + a_single_reward
+
+        total_rewards.append(rewards)
+        ε = min_ε + (1 - min_ε) * np.exp(-ε_decay * a_single_episode)
+
+    return Q, total_rewards

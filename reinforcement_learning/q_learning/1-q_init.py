@@ -1,37 +1,21 @@
 #!/usr/bin/env python3
-"""Load the FrozenLake environment from Gymnasium."""
+import numpy as np
 
-import gymnasium as gym
-
-
-def load_frozen_lake(desc=None, map_name=None, is_slippery=False):
+def q_init(env):
     """
-    Load the pre-made FrozenLake environment from Gymnasium.
+    Initialize the Q-table.
 
     Args:
-        desc: either None or a list of lists containing a custom
-              description of the map to load for the environment.
-        map_name: either None or a string containing the pre-made
-                  map to load. If both desc and map_name are None,
-                  a randomly generated 8x8 map is used.
-        is_slippery: boolean to determine if the ice is slippery.
+        env: the FrozenLakeEnv instance
 
     Returns:
-        The environment.
+        Q-table as a numpy.ndarray of zeros
     """
-    if desc is None and map_name is None:
-        map_name = "8x8"
+    # Number of states and actions in the environment
+    n_states = env.observation_space.n
+    n_actions = env.action_space.n
 
-    if desc is not None:
-        env = gym.make(
-            "FrozenLake-v1",
-            desc=desc,
-            is_slippery=is_slippery
-        )
-    else:
-        env = gym.make(
-            "FrozenLake-v1",
-            map_name=map_name,
-            is_slippery=is_slippery
-        )
-    return env
+    # Initialize Q-table with zeros
+    Q = np.zeros((n_states, n_actions))
+
+    return Q

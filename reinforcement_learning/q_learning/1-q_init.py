@@ -12,7 +12,7 @@ def load_frozen_lake(desc=None, map_name=None, is_slippery=False):
         desc: either None or a list of lists containing a custom
               description of the map to load for the environment.
         map_name: either None or a string containing the pre-made
-                  map to load.  If both desc and map_name are None,
+                  map to load. If both desc and map_name are None,
                   a randomly generated 8x8 map is used.
         is_slippery: boolean to determine if the ice is slippery.
 

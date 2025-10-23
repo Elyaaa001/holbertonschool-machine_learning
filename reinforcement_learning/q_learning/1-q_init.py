@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
 import numpy as np
+"""
+Initialize the Q-table for a FrozenLake environment.
+"""
 
 
 def q_init(env):

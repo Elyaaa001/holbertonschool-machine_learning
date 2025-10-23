@@ -1,25 +1,24 @@
 #!/usr/bin/env python3
-import numpy as np
 """
 Initialize the Q-table for a FrozenLake environment.
 """
 
+import numpy as np
+
 
 def q_init(env):
     """
-    Initialize the Q-table.
+    Initializes the Q-table for a given FrozenLake environment.
 
     Args:
-        env: the FrozenLakeEnv instance
+        env: the FrozenLakeEnv instance.
 
     Returns:
-        Q-table as a numpy.ndarray of zeros
+        numpy.ndarray: the Q-table, a matrix of zeros with shape
+                       (number of states, number of actions).
     """
-    # Number of states and actions in the environment
     n_states = env.observation_space.n
     n_actions = env.action_space.n
 
-    # Initialize Q-table with zeros
     Q = np.zeros((n_states, n_actions))
-
     return Q

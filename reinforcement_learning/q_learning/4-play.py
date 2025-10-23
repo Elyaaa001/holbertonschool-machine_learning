@@ -1,42 +1,76 @@
 #!/usr/bin/env python3
-"""
-Epsilon-greedy policy for selecting an action from a Q-table.
-"""
-
+import re
 import numpy as np
 
+_ACTION_NAMES = {0: "Left", 1: "Down", 2: "Right", 3: "Up"}
+_ANSI_RE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
 
-def epsilon_greedy(Q, state, epsilon):
+def _call_render(env):
+    """Call render for gymnasium or classic gym."""
+    try:
+        out = env.render()  # gymnasium: returns str with render_mode="ansi"
+    except TypeError:
+        out = None
+    if out is None:
+        try:
+            out = env.render(mode="ansi")  # classic gym fallback
+        except Exception:
+            out = ""
+    # Some gyms may return StringIO
+    if hasattr(out, "getvalue"):
+        out = out.getvalue()
+    if isinstance(out, bytes):
+        out = out.decode("utf-8", errors="ignore")
+    return out if isinstance(out, str) else str(out)
+
+def _normalize_board_str(s):
+    """Strip ANSI codes, convert backticks to quotes, trim trailing newlines."""
+    if not isinstance(s, str):
+        s = str(s)
+    s = _ANSI_RE.sub("", s)
+    s = s.replace("`", '"')
+    return s.rstrip()
+
+def play(env, Q, max_steps=100):
     """
-    Choose the next action using an epsilon-greedy strategy.
-
-    Args:
-        Q (numpy.ndarray): The Q-table of shape (n_states, n_actions).
-        state (int): The current state index.
-        epsilon (float): Exploration probability in [0.0, 1.0].
+    Plays one episode by always exploiting the Q-table.
 
     Returns:
-        int: The selected action index.
-
-    Notes:
-        - With probability `epsilon`, explores by sampling a random action.
-        - Otherwise, exploits by choosing argmax over Q[state].
+        total_rewards (float), rendered_outputs (list[str])
     """
-    # Basic validations and safe clamps (won't interfere with the checker)
-    if not isinstance(Q, np.ndarray) or Q.ndim != 2:
-        raise ValueError("Q must be a 2D numpy.ndarray")
-    n_actions = Q.shape[1]
-    if n_actions <= 0:
-        raise ValueError("Q must have at least one action (Q.shape[1] > 0)")
-    if state < 0 or state >= Q.shape[0]:
-        raise IndexError("state index out of bounds for Q")
-    if not np.isfinite(epsilon):
-        epsilon = 0.0
-    epsilon = float(np.clip(epsilon, 0.0, 1.0))
+    rendered_outputs = []
+    total_rewards = 0.0
 
-    p = np.random.uniform(0.0, 1.0)
-    if p < epsilon:
-        # Explore: choose a random action from all possible actions
-        return int(np.random.randint(n_actions))
-    # Exploit: choose the best known action (ties broken by first index)
-    return int(np.argmax(Q[state]))
+    # Reset (gymnasium returns (obs, info); classic gym returns obs)
+    try:
+        state, _ = env.reset()
+    except Exception:
+        state = env.reset()
+
+    # Initial board
+    rendered_outputs.append(_normalize_board_str(_call_render(env)))
+
+    for _ in range(max_steps):
+        # Exploit best action
+        action = int(np.argmax(Q[state]))
+
+        step = env.step(action)
+        if len(step) == 5:
+            next_state, reward, terminated, truncated, _info = step
+            done = terminated or truncated
+        else:
+            next_state, reward, done, _info = step
+
+        total_rewards += float(reward)
+
+        # Action line
+        rendered_outputs.append(f"  ({_ACTION_NAMES.get(action, str(action))})")
+
+        # Board after action (ensure final state is shown)
+        rendered_outputs.append(_normalize_board_str(_call_render(env)))
+
+        state = next_state
+        if done:
+            break
+
+    return total_rewards, rendered_outputs

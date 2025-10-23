@@ -1,76 +1,40 @@
 #!/usr/bin/env python3
-import re
+"""
+3-q_learning.py
+"""
 import numpy as np
+import time
 
-_ACTION_NAMES = {0: "Left", 1: "Down", 2: "Right", 3: "Up"}
-_ANSI_RE = re.compile(r'\x1B\[[0-?]*[ -/]*[@-~]')
-
-def _call_render(env):
-    """Call render for gymnasium or classic gym."""
-    try:
-        out = env.render()  # gymnasium: returns str with render_mode="ansi"
-    except TypeError:
-        out = None
-    if out is None:
-        try:
-            out = env.render(mode="ansi")  # classic gym fallback
-        except Exception:
-            out = ""
-    # Some gyms may return StringIO
-    if hasattr(out, "getvalue"):
-        out = out.getvalue()
-    if isinstance(out, bytes):
-        out = out.decode("utf-8", errors="ignore")
-    return out if isinstance(out, str) else str(out)
-
-def _normalize_board_str(s):
-    """Strip ANSI codes, convert backticks to quotes, trim trailing newlines."""
-    if not isinstance(s, str):
-        s = str(s)
-    s = _ANSI_RE.sub("", s)
-    s = s.replace("`", '"')
-    return s.rstrip()
 
 def play(env, Q, max_steps=100):
     """
-    Plays one episode by always exploiting the Q-table.
-
-    Returns:
-        total_rewards (float), rendered_outputs (list[str])
+    function that has the trained agent play an episode
     """
-    rendered_outputs = []
-    total_rewards = 0.0
 
-    # Reset (gymnasium returns (obs, info); classic gym returns obs)
-    try:
-        state, _ = env.reset()
-    except Exception:
-        state = env.reset()
+    state = env.reset()
+    done = False
+    time.sleep(1)
 
-    # Initial board
-    rendered_outputs.append(_normalize_board_str(_call_render(env)))
+    for step in range(max_steps):
 
-    for _ in range(max_steps):
-        # Exploit best action
-        action = int(np.argmax(Q[state]))
+        env.render()
+        time.sleep(3.0)
 
-        step = env.step(action)
-        if len(step) == 5:
-            next_state, reward, terminated, truncated, _info = step
-            done = terminated or truncated
-        else:
-            next_state, reward, done, _info = step
+        # Infer next action from current state (outside training -> q-table)
+        action = np.argmax(Q[state, :])
+        # Predict the next state based on action
+        new_state, reward, done, info = env.step(action)
 
-        total_rewards += float(reward)
-
-        # Action line
-        rendered_outputs.append(f"  ({_ACTION_NAMES.get(action, str(action))})")
-
-        # Board after action (ensure final state is shown)
-        rendered_outputs.append(_normalize_board_str(_call_render(env)))
-
-        state = next_state
-        if done:
+        # Handle episode termination:
+        # if new_state is b'H' or b'G' --> episode ends (done == True)
+        # with reward +1 if b'G' and -1 if b'H'
+        if done is True:
+            env.render()
             break
 
-    return total_rewards, rendered_outputs
+        # Update state
+        state = new_state
+
+    env.close()
+
+    return reward

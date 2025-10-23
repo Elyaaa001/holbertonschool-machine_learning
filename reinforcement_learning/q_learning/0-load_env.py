@@ -1,32 +1,24 @@
 #!/usr/bin/env python3
-"""
-Load the FrozenLake environment.
-"""
+"""Load the FrozenLake environment from Gymnasium."""
 
-from typing import List, Optional
 import gymnasium as gym
 
 
-def load_frozen_lake(
-    desc: Optional[List[List[str]]] = None,
-    map_name: Optional[str] = None,
-    is_slippery: bool = False
-):
+def load_frozen_lake(desc=None, map_name=None, is_slippery=False):
     """
     Load the pre-made FrozenLake environment from Gymnasium.
 
     Args:
-        desc: Optional custom map description as a list of list of single-char
-            strings (e.g., [['S', 'F', ...], ...]). If provided, map_name is
-            ignored.
-        map_name: Name of a pre-made map (e.g., "4x4", "8x8"). Ignored when
-            desc is provided. If both desc and map_name are None, defaults to
-            "8x8".
-        is_slippery: If True, transitions are stochastic; otherwise
-            deterministic.
+        desc: Either None or a list of lists containing a custom
+              description of the map to load for the environment.
+        map_name: Either None or a string containing the pre-made
+                  map to load.
+              Note: If both desc and map_name are None, the environment
+              will load a randomly generated 8x8 map.
+        is_slippery: Boolean to determine if the ice is slippery.
 
     Returns:
-        The Gymnasium FrozenLake-v1 environment.
+        The environment.
     """
     if desc is None and map_name is None:
         map_name = "8x8"

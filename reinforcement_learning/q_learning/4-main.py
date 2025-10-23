@@ -1,16 +1,30 @@
 #!/usr/bin/env python3
-
-load_frozen_lake = __import__('0-load_env').load_frozen_lake
-q_init = __import__('1-q_init').q_init
-train = __import__('3-q_learning').train
-play = __import__('4-play').play
-
+"""
+3-q_learning.py
+"""
 import numpy as np
-
-np.random.seed(0)
-desc = [['S', 'F', 'F'], ['F', 'H', 'H'], ['F', 'F', 'G']]
-env = load_frozen_lake(desc=desc)
-Q = q_init(env)
-
-Q, total_rewards  = train(env, Q)
-print(play(env, Q))
+import time
+def play(env, Q, max_steps=100):
+    """
+    function that has the trained agent play an episode
+    """
+    state = env.reset()
+    done = False
+    time.sleep(1)
+    for step in range(max_steps):
+        env.render()
+        time.sleep(3.0)
+        # Infer next action from current state (outside training -> q-table)
+        action = np.argmax(Q[state, :])
+        # Predict the next state based on action
+        new_state, reward, done, info = env.step(action)
+        # Handle episode termination:
+        # if new_state is b'H' or b'G' --> episode ends (done == True)
+        # with reward +1 if b'G' and -1 if b'H'
+        if done is True:
+            env.render()
+            break
+        # Update state
+        state = new_state
+    env.close()
+    return reward

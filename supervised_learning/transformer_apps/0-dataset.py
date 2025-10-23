@@ -2,7 +2,7 @@
 """Machine Translation Dataset helper"""
 
 import tensorflow_datasets as tfds
-from transformers import AutoTokenizer
+import transformers
 
 
 class Dataset:
@@ -27,24 +27,18 @@ class Dataset:
 
     def tokenize_dataset(self, data):
         """
-        Creates sub-word tokenizers for the dataset using pretrained models.
+        Creates tokenizers using pretrained models.
 
         Args:
-            data: tf.data.Dataset of (pt, en) pairs (unused here but kept for API parity)
-
-        Notes:
-            - Portuguese: neuralmind/bert-base-portuguese-cased
-            - English:    bert-base-uncased
-            - The pretrained vocab sizes exceed 2**13; we keep the
-              pretrained vocabularies as-is to remain compatible with the models.
+            data: tf.data.Dataset of (pt, en) pairs (kept for API compatibility)
 
         Returns:
             tokenizer_pt, tokenizer_en
         """
-        tokenizer_pt = AutoTokenizer.from_pretrained(
+        tokenizer_pt = transformers.AutoTokenizer.from_pretrained(
             "neuralmind/bert-base-portuguese-cased", use_fast=True
         )
-        tokenizer_en = AutoTokenizer.from_pretrained(
+        tokenizer_en = transformers.AutoTokenizer.from_pretrained(
             "bert-base-uncased", use_fast=True
         )
         return tokenizer_pt, tokenizer_en

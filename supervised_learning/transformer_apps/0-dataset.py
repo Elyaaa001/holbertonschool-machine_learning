@@ -1,54 +1,50 @@
 #!/usr/bin/env python3
-"""Transformer Application"""
-import tensorflow as tf
+"""Machine Translation Dataset helper"""
+
 import tensorflow_datasets as tfds
+from transformers import AutoTokenizer
 
 
 class Dataset:
-    """Loads and prepares a dataset for machine translation"""
+    """
+    Loads the TED HRLR Portuguese→English dataset and prepares tokenizers.
+    """
 
     def __init__(self):
-        """Class constructor"""
-        # Load Portuguese–English dataset
+        """
+        - data_train: tf.data.Dataset train split (as_supervised=True)
+        - data_valid: tf.data.Dataset validation split (as_supervised=True)
+        - tokenizer_pt: pretrained Portuguese tokenizer
+        - tokenizer_en: pretrained English tokenizer
+        """
         self.data_train, self.data_valid = tfds.load(
-            'ted_hrlr_translate/pt_to_en',
-            split=['train', 'validation'],
-            as_supervised=True
+            "ted_hrlr_translate/pt_to_en",
+            split=["train", "validation"],
+            as_supervised=True,
         )
 
-        # Create tokenizers
         self.tokenizer_pt, self.tokenizer_en = self.tokenize_dataset(self.data_train)
 
-        # Tokenize both train and validation sets
-        self.data_train = self.data_train.map(self.tf_encode)
-        self.data_valid = self.data_valid.map(self.tf_encode)
-
     def tokenize_dataset(self, data):
-        """Creates sub-word tokenizers for our dataset"""
-        tokenizer_pt = tfds.deprecated.text.SubwordTextEncoder.build_from_corpus(
-            (pt.numpy() for pt, en in data), target_vocab_size=2**15
+        """
+        Creates sub-word tokenizers for the dataset using pretrained models.
+
+        Args:
+            data: tf.data.Dataset of (pt, en) pairs (unused here but kept for API parity)
+
+        Notes:
+            - Portuguese: neuralmind/bert-base-portuguese-cased
+            - English:    bert-base-uncased
+            - The pretrained vocab sizes exceed 2**13; we keep the
+              pretrained vocabularies as-is to remain compatible with the models.
+
+        Returns:
+            tokenizer_pt, tokenizer_en
+        """
+        tokenizer_pt = AutoTokenizer.from_pretrained(
+            "neuralmind/bert-base-portuguese-cased", use_fast=True
         )
-        tokenizer_en = tfds.deprecated.text.SubwordTextEncoder.build_from_corpus(
-            (en.numpy() for pt, en in data), target_vocab_size=2**15
+        tokenizer_en = AutoTokenizer.from_pretrained(
+            "bert-base-uncased", use_fast=True
         )
         return tokenizer_pt, tokenizer_en
-
-    def encode(self, pt, en):
-        """Encodes a translation pair into tokens with start/end tokens"""
-        pt_tokens = [self.tokenizer_pt.vocab_size] + self.tokenizer_pt.encode(pt.numpy()) + [self.tokenizer_pt.vocab_size + 1]
-        en_tokens = [self.tokenizer_en.vocab_size] + self.tokenizer_en.encode(en.numpy()) + [self.tokenizer_en.vocab_size + 1]
-        return pt_tokens, en_tokens
-
-    def tf_encode(self, pt, en):
-        """TensorFlow wrapper for encode() using tf.py_function"""
-        result_pt, result_en = tf.py_function(
-            self.encode,
-            [pt, en],
-            [tf.int64, tf.int64]
-        )
-
-        # Set shape (important for TensorFlow graph tracing)
-        result_pt.set_shape([None])
-        result_en.set_shape([None])
-
-        return result_pt, result_en

@@ -1,28 +1,30 @@
 #!/usr/bin/env python3
-""" Task 4: 4. Play """
+"""
+Epsilon-greedy action selection for a given state.
+"""
+
 import numpy as np
 
 
-def play(env, Q, max_steps=100):
-    """[Function that has the trained agent play an episode]
-    Args:
-        env ([instance]):   [FrozenLakeEnv instance]
-        Q ([ndarray]):      [is a numpy.ndarray containing the Q-table]
-        max_steps (int, optional): [maximum number of steps in the episode].
-                                    Defaults to 100.
-    Each state of the board should be displayed via the console
-    You should always exploit the Q-table
-    Returns: the total rewards for the episode
+def epsilon_greedy(Q, state, epsilon):
     """
-    # Reset environment and get initial state
-    state = env.reset()
-    total_reward = 0
-    renders = [env.render()]  # capture first render
-    for _ in range(max_steps):
+    Uses epsilon-greedy to determine the next action.
+
+    Args:
+        Q (numpy.ndarray): Q-table.
+        state (int): current state.
+        epsilon (float): probability of exploring.
+
+    Returns:
+        int: the index of the next action.
+    """
+    p = np.random.uniform(0, 1)
+
+    # Explore: choose random action
+    if p < epsilon:
+        action = np.random.randint(Q.shape[1])
+    # Exploit: choose best known action
+    else:
         action = np.argmax(Q[state])
-        state, reward, done, _ = env.step(action)
-        total_reward += reward
-        renders.append(env.render())
-        if done:
-            break
-    return total_reward, renders
+
+    return action

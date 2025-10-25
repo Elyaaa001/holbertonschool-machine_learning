@@ -1,39 +1,40 @@
 #!/usr/bin/env python3
-"""Module implémentant la classe YOLO v3 pour la détection d'objets"""
-
+"""YOLO v3 object detector - constructor only"""
+import numpy as np
 import tensorflow.keras as K
 
 
 class Yolo:
-    """Classe pour charger et configurer le modèle YOLO v3
+    """
+    Uses the YOLO v3 algorithm to perform object detection.
 
-    Attributes:
-        model (keras.Model): Modèle Darknet chargé
-        class_names (list): Liste des noms de classes COCO
-        class_t (float): Seuil de confiance des détections
-        nms_t (float): Seuil de suppression non-maximale
-        anchors (numpy.ndarray): Boîtes d'ancrage prédéfinies
+    Public instance attributes initialized:
+      - model: the Darknet Keras model
+      - class_names: list of class names (in index order)
+      - class_t: box score threshold for initial filtering
+      - nms_t: IOU threshold for non-max suppression
+      - anchors: anchor boxes (outputs, anchor_boxes, 2)
     """
 
     def __init__(self, model_path, classes_path, class_t, nms_t, anchors):
-        """Initialise les paramètres YOLO
-
-        Args:
-            model_path (str): Chemin vers le fichier .h5 du modèle
-            classes_path (str): Chemin vers le fichier des classes COCO
-            class_t (float): Seuil de confiance [0,1]
-            nms_t (float): Seuil NMS [0,1]
-            anchors (np.ndarray): Boîtes d'ancrage (outputs, nb_ancres, 2)
         """
-
-        # Chargement du modèle Keras
+        Args:
+            model_path (str): path to a Darknet Keras model (.h5 / .keras).
+            classes_path (str): path to text file with class names (one per line).
+            class_t (float): box score threshold for the initial filtering step.
+            nms_t (float): IOU threshold for non-max suppression.
+            anchors (np.ndarray): shape (outputs, anchor_boxes, 2) with anchor sizes.
+        """
+        # Load Keras Darknet model
         self.model = K.models.load_model(model_path)
 
-        # Lecture des noms de classes
-        with open(classes_path, 'r') as f:
-            self.class_names = [line.strip() for line in f]
+        # Load class names (strip empty lines)
+        with open(classes_path, "r", encoding="utf-8") as f:
+            self.class_names = [line.strip() for line in f if line.strip()]
 
-        # Initialisation des paramètres
-        self.class_t = class_t
-        self.nms_t = nms_t
+        # Store thresholds and anchors
+        self.class_t = float(class_t)
+        self.nms_t = float(nms_t)
+        if not isinstance(anchors, np.ndarray) or anchors.ndim != 3 or anchors.shape[-1] != 2:
+            raise ValueError("anchors must be a numpy.ndarray of shape (outputs, anchor_boxes, 2)")
         self.anchors = anchors
